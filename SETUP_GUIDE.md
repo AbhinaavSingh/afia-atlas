@@ -122,9 +122,11 @@ Verify: in the Supabase dashboard, **Table Editor** should now show `memories`, 
 Still in PowerShell in the project folder:
 
 ```powershell
-npx supabase functions deploy submit-memory
+npx supabase functions deploy submit-memory --no-verify-jwt
 npx supabase functions deploy moderate-memory
 ```
+
+(`--no-verify-jwt` is required on `submit-memory` because friends upload anonymously with the new `sb_publishable_...` key, which isn't a JWT. The function still protects itself with origin checks, Turnstile, and rate limiting.)
 
 These handle photo uploads (with spam protection and rate limiting) and hide/restore. We'll set their secrets in Part 6 once you have the Turnstile keys and final URLs.
 
