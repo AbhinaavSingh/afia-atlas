@@ -10,7 +10,7 @@ import { createJourneyIcon } from '../journey/markers'
 
 const contributionPin = createJourneyIcon({
   kind: 'pin',
-  label: 'Memory location',
+  label: 'Moment location',
 })
 
 declare global {
@@ -141,7 +141,7 @@ export function ContributePage() {
     event.preventDefault()
     setError('')
     if (!photo) {
-      setError('Please choose one photograph for your memory.')
+      setError('Please choose one photograph for this moment.')
       return
     }
 
@@ -174,7 +174,7 @@ export function ContributePage() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : 'We could not send your memory.',
+          : 'We could not send your moment.',
       )
       setStatus('idle')
       window.turnstile?.reset()

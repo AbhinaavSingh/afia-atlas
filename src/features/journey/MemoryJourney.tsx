@@ -263,7 +263,7 @@ function StoryView({
         data-story-close
         className="story-close"
         onClick={onClose}
-        aria-label="Close memory"
+        aria-label="Close moment"
       >
         <X size={18} />
       </button>
@@ -278,7 +278,7 @@ function StoryView({
           <img
             key={memory.imageUrl}
             src={memory.imageUrl}
-            alt={`Memory shared by ${memory.contributorName}`}
+            alt={`Moment shared by ${memory.contributorName}`}
           />
         ) : (
           <div className="story-photo-fallback">
@@ -300,7 +300,7 @@ function StoryView({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.65 }}
       >
-        <p className="story-kicker">A memory from {memory.contributorName}</p>
+        <p className="story-kicker">A moment from {memory.contributorName}</p>
         <h2>{memory.title}</h2>
         <p className="story-body">{memory.story}</p>
         <p className="story-signature">
@@ -309,11 +309,11 @@ function StoryView({
         </p>
         <div className="story-actions">
           <div className="story-pager">
-            <button onClick={onPrevious} aria-label="Previous memory">
+            <button onClick={onPrevious} aria-label="Previous moment">
               <ArrowLeft size={16} />
             </button>
             <span>{index + 1} of {total}</span>
-            <button onClick={onNext} aria-label="Next memory">
+            <button onClick={onNext} aria-label="Next moment">
               <ArrowRight size={16} />
             </button>
           </div>
@@ -705,7 +705,7 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                     title={
                       point.kind === 'memory'
                         ? `Open ${point.label}`
-                        : `Explore ${point.label}, ${point.count} memories`
+                        : `Explore ${point.label}, ${point.count} moments`
                     }
                   />
                 ))}
@@ -750,7 +750,7 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                   <i style={{ width: `${seenProgress}%` }} />
                 </div>
               </div>
-              <div className="journey-location-rail" aria-label="Places and memories">
+              <div className="journey-location-rail" aria-label="Places and moments">
                 {points.map((point, index) => {
                   const pointMemories =
                     point.kind === 'memory' ? [point.memory] : point.memories

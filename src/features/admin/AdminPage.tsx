@@ -72,7 +72,7 @@ function MemoryEditor({
     <div className="admin-editor-wrap" role="dialog" aria-modal="true">
       <form className="admin-editor" onSubmit={save}>
         <button type="button" className="icon-button" onClick={onClose}><X /></button>
-        <h2>Edit memory</h2>
+        <h2>Edit moment</h2>
         <div className="form-grid two">
           <label>Contributor<input value={draft.contributorName} onChange={(event) => setDraft({ ...draft, contributorName: event.target.value })} /></label>
           <label>Relationship<input value={draft.relationship ?? ''} onChange={(event) => setDraft({ ...draft, relationship: event.target.value })} /></label>
@@ -255,7 +255,7 @@ export function AdminPage() {
             </div>
           </article>
         ))}
-        {!memories.length && <div className="admin-empty">No memories have arrived yet.</div>}
+        {!memories.length && <div className="admin-empty">No moments have arrived yet.</div>}
       </section>
 
       {editing && (

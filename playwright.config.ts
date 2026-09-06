@@ -10,7 +10,9 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 4173',
+    // Mode "test" makes Vite skip .env.local, so e2e always runs in demo mode
+    // even when real Supabase credentials are configured for local development.
+    command: 'npm run dev -- --host 127.0.0.1 --port 4173 --mode test',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
   },

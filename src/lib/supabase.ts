@@ -1,7 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// In test mode (Playwright e2e) always run in demo mode, even when real
+// credentials exist in .env.local for local development against production.
+const isTestMode = import.meta.env.MODE === 'test'
+
+const supabaseUrl = isTestMode
+  ? undefined
+  : (import.meta.env.VITE_SUPABASE_URL as string | undefined)
+const supabaseAnonKey = isTestMode
+  ? undefined
+  : (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 

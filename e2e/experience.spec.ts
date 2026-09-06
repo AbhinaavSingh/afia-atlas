@@ -6,7 +6,7 @@ test('revealed experience opens a memory', async ({ page }) => {
   await page.locator('#memories').scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: /step into her world/i }).click()
   await expect(page.getByText(/her world · 6 moments/i).first()).toBeVisible()
-  const rail = page.getByLabel('Places and memories')
+  const rail = page.getByLabel('Places and moments')
   await rail.getByRole('button', { name: /india.*3 moments/i }).click()
   await rail.getByRole('button', { name: /bangalore.*2 moments/i }).click()
   await rail

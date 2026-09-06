@@ -48,7 +48,7 @@ export function createJourneyIcon({
     kind === 'pin' || kind === 'memory'
       ? ''
       : `<span class="journey-marker-caption"><strong>${safeLabel}</strong>${
-          count == null ? '' : `<small>${count} ${count === 1 ? 'memory' : 'memories'}</small>`
+          count == null ? '' : `<small>${count} ${count === 1 ? 'moment' : 'moments'}</small>`
         }</span>`
 
   return divIcon({

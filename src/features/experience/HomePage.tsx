@@ -56,7 +56,7 @@ function LockedPage({ settings }: { settings: SiteSettings }) {
           ))}
         </div>
         <Link className="text-link" to="/contribute">
-          Know Afia? Add a memory <span>↗</span>
+          Know Afia? Add a moment to her atlas <span>↗</span>
         </Link>
       </motion.div>
     </main>
@@ -112,7 +112,7 @@ function RevealedPage({ memories, demo }: { memories: Memory[]; demo: boolean })
           <Sparkles size={20} />
           <p>{siteContent.invitation}</p>
           <div className="fine-line" />
-          <span>Made from the memories of people who love you</span>
+          <span>Made from moments shared by people who love you</span>
         </motion.div>
       </section>
 
