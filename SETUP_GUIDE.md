@@ -18,7 +18,7 @@ SUPABASE PROJECT REF:        (Part 2)
 SUPABASE URL:                (Part 2)
 SUPABASE ANON/PUBLIC KEY:    (Part 2)
 ADMIN EMAIL + PASSWORD:      (Part 2)
-PAGES.DEV URL:               (Part 4)
+WORKERS.DEV URL:             (Part 4)
 YOUR DOMAIN:                 (Part 5)
 TURNSTILE SITE KEY:          (Part 6)
 TURNSTILE SECRET KEY:        (Part 6)
@@ -151,28 +151,29 @@ The map actually unlocks when **you flip the reveal switch in `/admin`** — the
 
 ---
 
-## Part 4 — Host the site on Cloudflare Pages (20 min)
+## Part 4 — Host the site on Cloudflare Workers (20 min)
 
-1. [dash.cloudflare.com](https://dash.cloudflare.com) → in the left sidebar, **Compute (Workers) → Workers & Pages** → **Create** → **Pages** tab → **Connect to Git**.
+*(Cloudflare's dashboard has replaced the old "Pages" flow with Workers. The repo contains `wrangler.jsonc`, which tells Cloudflare to serve the built site as a static single-page app — same free hosting, same custom domains.)*
+
+1. [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create application** → **Continue with GitHub**.
 2. Authorize Cloudflare to access your GitHub, select the `afia-atlas` repository.
 3. Build settings:
-   - **Framework preset**: Vite (or None)
    - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-4. Before clicking Deploy, open **Environment variables** and add these three (from your scratch note; Turnstile comes in Part 6 — for now put in a placeholder like `pending`):
+   - **Deploy command**: `npx wrangler deploy`
+4. Before deploying, open the **variables** section ("Build variables and secrets") and add these three (Turnstile comes in Part 6 — for now put in a placeholder like `pending`):
 
    | Name | Value |
    |---|---|
    | `VITE_SUPABASE_URL` | your Supabase URL |
-   | `VITE_SUPABASE_ANON_KEY` | your anon key |
+   | `VITE_SUPABASE_ANON_KEY` | your anon/publishable key |
    | `VITE_TURNSTILE_SITE_KEY` | `pending` (replaced in Part 6) |
 
-5. Click **Save and Deploy**. First build takes ~2 minutes.
-6. You get a URL like `https://afia-atlas.pages.dev` — write it down (`PAGES.DEV URL`).
+5. Click **Deploy**. First build takes ~2 minutes.
+6. You get a URL like `https://afia-atlas.YOUR_SUBDOMAIN.workers.dev` — write it down (`WORKERS.DEV URL`).
 
 Open the URL: you should see the **locked countdown page** (because the reveal flag in Supabase is off). That's correct. You can check `/admin` and log in with your email/password from Part 2.4.
 
-> ✅ Checkpoint: the site is live on the internet at the pages.dev URL, connected to your real database.
+> ✅ Checkpoint: the site is live on the internet at the workers.dev URL, connected to your real database.
 
 ---
 
@@ -181,7 +182,7 @@ Open the URL: you should see the **locked countdown page** (because the reveal f
 1. Cloudflare dashboard → **Domain Registration → Register Domains**.
 2. Search for the name you want (e.g. `afiasatlas.com`, `thirtyyearsofafia.com`). `.com` is ~$10/year, charged at cost, no markup on renewal.
 3. Buy it (this is the only money you'll spend). Auto-renew is on by default — leave it on.
-4. Connect it to the site: **Workers & Pages → your project → Custom domains → Set up a custom domain** → enter your domain (e.g. `afiasatlas.com`).
+4. Connect it to the site: **Workers & Pages → your project → Settings → Domains & Routes → Add → Custom domain** → enter your domain (e.g. `afiasatlas.com`).
    - Because the domain is registered with Cloudflare, DNS is configured **automatically** — just confirm.
    - Optionally add `www.yourdomain.com` as a second custom domain the same way.
 5. Wait a few minutes, then open `https://yourdomain.com`. HTTPS certificate is automatic.
@@ -197,15 +198,15 @@ Open the URL: you should see the **locked countdown page** (because the reveal f
 1. Cloudflare dashboard → **Turnstile** (left sidebar) → **Add widget**.
 2. Name: `afia-atlas`. Hostnames — add **both**:
    - `yourdomain.com`
-   - `afia-atlas.pages.dev`
+   - your `workers.dev` hostname (e.g. `afia-atlas.YOUR_SUBDOMAIN.workers.dev`)
 3. Widget mode: **Managed**. Create.
 4. Copy the **Site Key** and **Secret Key** into your scratch note.
 
-### 6.2 Put the site key into Cloudflare Pages
+### 6.2 Put the site key into Cloudflare
 
-1. **Workers & Pages → your project → Settings → Variables and Secrets**.
+1. **Workers & Pages → your project → Settings → Build → Variables and Secrets**.
 2. Edit `VITE_TURNSTILE_SITE_KEY` → replace `pending` with the real Site Key. Save.
-3. Redeploy so the new value is baked in: **Deployments** tab → latest deployment → **⋯ → Retry deployment** (or just push any commit).
+3. Redeploy so the new value is baked in: retry the latest build from the **Deployments** view (or just push any commit).
 
 ### 6.3 Give the secrets to the Supabase functions
 
@@ -213,7 +214,7 @@ In PowerShell, from the project folder (one line; replace the three values — f
 `RATE_LIMIT_SALT` type ~40 random characters, it's just an internal scrambler):
 
 ```powershell
-npx supabase secrets set TURNSTILE_SECRET_KEY=YOUR_TURNSTILE_SECRET ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com,https://afia-atlas.pages.dev RATE_LIMIT_SALT=some-long-random-string-you-make-up
+npx supabase secrets set TURNSTILE_SECRET_KEY=YOUR_TURNSTILE_SECRET ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com,https://afia-atlas.abhinaavsingh1.workers.dev RATE_LIMIT_SALT=some-long-random-string-you-make-up
 ```
 
 `ALLOWED_ORIGINS` must list every address the site is served from — that's what stops other websites from posting to your upload endpoint.
@@ -287,6 +288,6 @@ It now runs automatically every Monday and Thursday. Additionally, Supabase emai
 
 - **Contribute page says verification failed** → Turnstile hostname list is missing the domain being used, or the site key in Pages doesn't match the widget.
 - **Upload fails with "origin not allowed"** → the domain is missing from `ALLOWED_ORIGINS`; re-run the `npx supabase secrets set` command from Part 6.3 with the full list.
-- **Site shows demo/sample memories** → the `VITE_...` environment variables are missing or misspelled in Cloudflare Pages; fix and retry the deployment.
+- **Site shows demo/sample memories** → the `VITE_...` environment variables are missing or misspelled in the Cloudflare project's build variables; fix and retry the deployment.
 - **Supabase project paused** → Supabase dashboard → project → **Restore**. Takes a couple of minutes; then check the GitHub Action is running (Part 7).
 - **Admin login fails** → confirm the user exists in Supabase Authentication and its UUID is in the `admins` table (Part 2.4).
