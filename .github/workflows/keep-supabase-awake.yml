@@ -1,0 +1,25 @@
+name: Keep birthday project active
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1,4'
+
+permissions:
+  contents: read
+
+jobs:
+  database-activity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read reveal setting
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_ANON_KEY"
+          curl --fail --silent --show-error \
+            "$SUPABASE_URL/rest/v1/site_settings?select=revealed&id=eq.1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
