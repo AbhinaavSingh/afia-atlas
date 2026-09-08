@@ -81,6 +81,14 @@ h1, h2, h3 { font-family: 'Italiana', serif; font-weight: 400; }
 .countdown div:last-child { border: 0; }
 .countdown strong { display: block; font-family: 'Italiana'; font-size: 2.2rem; font-weight: 400; }
 .countdown span { display: block; color: #7f7580; font-size: .58rem; letter-spacing: .18em; text-transform: uppercase; margin-top: .45rem; }
+.locked-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .9rem; margin-top: .4rem; }
+.locked-actions .primary-button { font-size: .85rem; }
+.locked-actions .secondary-button { font-size: .8rem; }
+.locked-first { margin-top: 1.4rem; color: #8f838e; font-size: .8rem; }
+.atlas-preview .globe-section { padding-top: clamp(3rem, 7vh, 5rem); }
+.preview-back { display: inline-flex; align-items: center; gap: .45rem; margin-bottom: 2.2rem; padding: 0; color: #9c8fa0; background: none; border: 0; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
+.preview-back:hover { color: var(--cream); }
+.preview-foot { display: flex; justify-content: center; margin-top: 2.6rem; padding-bottom: 4rem; }
 .text-link { font-size: .78rem; border-bottom: 1px solid rgba(215,185,120,.4); padding-bottom: .4rem; color: #d8ccd3; }
 .text-link span { color: var(--gold); margin-left: .3rem; }
 .orb { position: absolute; border-radius: 50%; filter: blur(3px); opacity: .18; }

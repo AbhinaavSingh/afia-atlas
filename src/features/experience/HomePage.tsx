@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowDown, Heart, LockKeyhole, Sparkles } from 'lucide-react'
+import { ArrowDown, ArrowLeft, Heart, LockKeyhole, Map, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { siteContent } from '../../content/site'
@@ -28,7 +28,15 @@ function useCountdown(target: string) {
   }, [now, target])
 }
 
-function LockedPage({ settings }: { settings: SiteSettings }) {
+function LockedPage({
+  settings,
+  memories,
+  onExplore,
+}: {
+  settings: SiteSettings
+  memories: Memory[]
+  onExplore: () => void
+}) {
   const countdown = useCountdown(settings.revealAt)
   return (
     <main className="locked-page">
@@ -55,10 +63,60 @@ function LockedPage({ settings }: { settings: SiteSettings }) {
             </div>
           ))}
         </div>
-        <Link className="text-link" to="/contribute">
-          Know Afia? Add a moment to her atlas <span>↗</span>
-        </Link>
+        <div className="locked-actions">
+          <Link className="primary-button" to="/contribute">
+            Know Afia? Add a moment to her atlas
+          </Link>
+          {memories.length > 0 && (
+            <button className="secondary-button" onClick={onExplore}>
+              <Map size={15} />
+              Explore the atlas so far · {memories.length}{' '}
+              {memories.length === 1 ? 'moment' : 'moments'}
+            </button>
+          )}
+        </div>
+        {!memories.length && (
+          <p className="locked-first">
+            The map is still empty — yours could be the first light on it.
+          </p>
+        )}
       </motion.div>
+    </main>
+  )
+}
+
+function AtlasPreviewPage({
+  memories,
+  onBack,
+}: {
+  memories: Memory[]
+  onBack: () => void
+}) {
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+  return (
+    <main className="experience atlas-preview">
+      <section className="globe-section" id="memories">
+        <div className="section-heading">
+          <button className="preview-back" onClick={onBack}>
+            <ArrowLeft size={14} /> Back to the countdown
+          </button>
+          <p className="eyebrow">Before the doors open</p>
+          <h2>The atlas so far</h2>
+          <p>
+            {memories.length} {memories.length === 1 ? 'moment' : 'moments'}{' '}
+            placed by people who love her. Wander through them — then add your
+            own.
+          </p>
+        </div>
+        <MemoryJourney memories={memories} />
+        <div className="preview-foot">
+          <Link className="primary-button" to="/contribute">
+            Add your moment to her atlas
+          </Link>
+        </div>
+      </section>
     </main>
   )
 }
@@ -162,6 +220,7 @@ export function HomePage() {
     canPreview: boolean
   } | null>(null)
   const [error, setError] = useState('')
+  const [exploring, setExploring] = useState(false)
 
   useEffect(() => {
     getPublicExperience().then(setState).catch(() => {
@@ -191,7 +250,21 @@ export function HomePage() {
   }
   const previewRequested = new URLSearchParams(window.location.search).has('preview')
   if (!state.settings.revealed && !(state.canPreview && previewRequested)) {
-    return <LockedPage settings={state.settings} />
+    if (exploring && state.memories.length) {
+      return (
+        <AtlasPreviewPage
+          memories={state.memories}
+          onBack={() => setExploring(false)}
+        />
+      )
+    }
+    return (
+      <LockedPage
+        settings={state.settings}
+        memories={state.memories}
+        onExplore={() => setExploring(true)}
+      />
+    )
   }
   return <RevealedPage memories={state.memories} demo={state.demo} />
 }

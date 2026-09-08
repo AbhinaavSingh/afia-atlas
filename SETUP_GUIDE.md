@@ -250,7 +250,7 @@ It now runs automatically every Monday and Thursday. Additionally, Supabase emai
 - [ ] Open the homepage in a private/incognito window — it must show the **locked countdown**, never the map.
 - [ ] Check the admin statistics show your test entries and contributors correctly.
 - [ ] Delete/hide your test entries.
-- [ ] Share `https://yourdomain.com/contribute` with friends (group chats, DMs). The main link `https://yourdomain.com` stays locked, so nothing is spoiled even if it's forwarded.
+- [ ] Share `https://yourdomain.com/contribute` with friends (group chats, DMs). Before the reveal, the main link shows the countdown plus an "explore the atlas so far" option, so friends can watch the map fill up — but the full birthday experience (the letter and dedication written for her) only appears after you flip the reveal switch.
 
 ### As entries come in (ongoing, 2 min/day)
 
