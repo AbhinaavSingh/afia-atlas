@@ -13,6 +13,20 @@ const contributionPin = createJourneyIcon({
   label: 'Moment location',
 })
 
+interface PlaceResult {
+  lat: string
+  lon: string
+  display_name: string
+  address?: {
+    city?: string
+    town?: string
+    village?: string
+    municipality?: string
+    state?: string
+    country_code?: string
+  }
+}
+
 declare global {
   interface Window {
     turnstile?: {
@@ -62,6 +76,8 @@ export function ContributePage() {
     countryCode: '',
   })
   const [findingPlace, setFindingPlace] = useState(false)
+  const [placeResults, setPlaceResults] = useState<PlaceResult[]>([])
+  const [searchedOnce, setSearchedOnce] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle')
   const [error, setError] = useState('')
@@ -100,41 +116,37 @@ export function ContributePage() {
       const params = new URLSearchParams({
         q: placeQuery,
         format: 'jsonv2',
-        limit: '1',
+        limit: '6',
         addressdetails: '1',
       })
       const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`)
-      const [place] = (await response.json()) as Array<{
-        lat: string
-        lon: string
-        display_name: string
-        address?: {
-          city?: string
-          town?: string
-          village?: string
-          municipality?: string
-          state?: string
-          country_code?: string
-        }
-      }>
-      if (!place) throw new Error('We could not find that place.')
-      setPosition([Number(place.lat), Number(place.lon)])
-      setPlaceName(place.display_name)
-      setLocationMeta({
-        city:
-          place.address?.city ??
-          place.address?.town ??
-          place.address?.village ??
-          place.address?.municipality ??
-          '',
-        regionName: place.address?.state ?? '',
-        countryCode: place.address?.country_code?.toUpperCase() ?? '',
-      })
+      const places = (await response.json()) as PlaceResult[]
+      setSearchedOnce(true)
+      setPlaceResults(places)
+      if (!places.length) {
+        setError('We could not find that place — try adding a city or country.')
+      }
     } catch (searchError) {
       setError(searchError instanceof Error ? searchError.message : 'Place search failed.')
     } finally {
       setFindingPlace(false)
     }
+  }
+
+  const choosePlace = (place: PlaceResult) => {
+    setPosition([Number(place.lat), Number(place.lon)])
+    setPlaceName(place.display_name)
+    setLocationMeta({
+      city:
+        place.address?.city ??
+        place.address?.town ??
+        place.address?.village ??
+        place.address?.municipality ??
+        '',
+      regionName: place.address?.state ?? '',
+      countryCode: place.address?.country_code?.toUpperCase() ?? '',
+    })
+    setPlaceResults([])
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -300,7 +312,17 @@ export function ContributePage() {
                   <div className="input-action">
                     <input
                       value={placeQuery}
-                      onChange={(event) => setPlaceQuery(event.target.value)}
+                      onChange={(event) => {
+                        setPlaceQuery(event.target.value)
+                        setPlaceResults([])
+                        setSearchedOnce(false)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          void findPlace()
+                        }
+                      }}
                       placeholder="Search for the place in the photograph"
                       required
                     />
@@ -309,6 +331,28 @@ export function ContributePage() {
                     </button>
                   </div>
                 </label>
+                {placeResults.length > 0 && (
+                  <ul className="place-results" aria-label="Matching places">
+                    {placeResults.map((place) => (
+                      <li key={`${place.lat}:${place.lon}`}>
+                        <button type="button" onClick={() => choosePlace(place)}>
+                          <MapPin size={13} />
+                          <span>{place.display_name}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {placeName && !placeResults.length && (
+                  <p className="place-chosen">
+                    <Check size={13} /> {placeName}
+                  </p>
+                )}
+                {searchedOnce && !placeResults.length && !placeName && !findingPlace && (
+                  <p className="place-chosen muted">
+                    No match? You can also tap the exact spot on the map below.
+                  </p>
+                )}
               </div>
               <div className="location-map">
                 <MapContainer center={position} zoom={2} scrollWheelZoom={false}>
