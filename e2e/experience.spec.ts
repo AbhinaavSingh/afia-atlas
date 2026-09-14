@@ -19,7 +19,13 @@ test('revealed experience opens a memory', async ({ page }) => {
   ).toBeVisible()
   await page.getByRole('button', { name: /close moment/i }).click()
   await page.getByRole('button', { name: /back to india/i }).click()
-  await page.getByRole('button', { name: /back to the world map/i }).click()
+  await expect(page.getByText(/india · 3 moments/i).first()).toBeVisible()
+  // Let the camera flight land before zooming manually.
+  await page.waitForTimeout(2000)
+  // Zooming out manually should climb back up to the world view.
+  await page.getByRole('button', { name: 'Zoom out' }).click()
+  await page.waitForTimeout(500)
+  await page.getByRole('button', { name: 'Zoom out' }).click()
   await expect(page.getByText(/her world · 6 moments/i).first()).toBeVisible()
 })
 

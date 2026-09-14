@@ -20,6 +20,7 @@ import {
   Polyline,
   TileLayer,
   useMap,
+  useMapEvents,
 } from 'react-leaflet'
 import type { Memory } from '../../types'
 import { createJourneyIcon } from './markers'
@@ -128,6 +129,25 @@ function MapCamera({
       noMoveStart: false,
     })
   }, [center, map, zoom])
+  return null
+}
+
+function ZoomOutWatcher({
+  levelZoom,
+  enabled,
+  onZoomOut,
+}: {
+  levelZoom: number
+  enabled: boolean
+  onZoomOut: () => void
+}) {
+  const map = useMapEvents({
+    zoomend() {
+      // A camera flight always lands exactly on levelZoom, so a reading
+      // well below it can only come from the user pinching or zooming out.
+      if (enabled && map.getZoom() <= levelZoom - 1.5) onZoomOut()
+    },
+  })
   return null
 }
 
@@ -670,6 +690,11 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                 />
                 <MapCamera center={cameraCenter} zoom={cameraZoom} />
                 <MapControls />
+                <ZoomOutWatcher
+                  levelZoom={cameraZoom}
+                  enabled={Boolean(activeCountry) && !isTravelling}
+                  onZoomOut={goBack}
+                />
                 {!activeArea &&
                   points.slice(1).map((point, index) => (
                     <Polyline
