@@ -84,10 +84,12 @@ Deno.serve(async (request) => {
       .select('*', { count: 'exact', head: true })
       .eq('ip_hash', ipHash)
       .gte('created_at', oneHourAgo)
-    if ((count ?? 0) >= 6) {
+    // Generous backstop only: Turnstile already blocks bots, and mobile
+    // carriers put many people behind one shared IP address.
+    if ((count ?? 0) >= 30) {
       return json(
         request,
-        { error: 'Too many memories were sent from this connection. Try again later.' },
+        { error: 'A lot of moments are arriving from this network right now. Please try again in an hour.' },
         429,
       )
     }

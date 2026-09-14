@@ -53,7 +53,7 @@ Supabase supplies `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROL
 ## Security model
 
 - Public visitors can read only visible memories and the reveal setting.
-- Uploads pass through a server-side function with origin checks, Turnstile verification, validation, and a six-per-hour IP rate limit.
+- Uploads pass through a server-side function with origin checks, Turnstile verification, validation, and a 30-per-hour IP rate limit (generous because mobile carriers share IP addresses across many users).
 - IP addresses are salted and hashed; raw addresses are never stored.
 - New entries publish immediately. Hiding an entry moves its image into private storage; restoring it moves the image back.
 - Admin status is tied to a manually provisioned Supabase Auth user and enforced by row-level security.
