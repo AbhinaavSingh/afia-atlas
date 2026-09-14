@@ -6,14 +6,14 @@ export const siteContent = {
   eyebrow: 'A universe of moments',
   headline: 'Thirty years of light.',
   intro:
-    'Some people move through the world. Others make it warmer, brighter, and infinitely more beautiful just by being in it.',
+    'Some people move through the world. You make it brighter just by being in it.',
   invitation:
     'Across cities, years, late nights and long flights, you have left little constellations in all of us. This is a map of those moments.',
   globeHeading: 'You are loved everywhere.',
   globeSubheading:
     'Every light is a place, a person, and a story that became better because you were there.',
   dedication:
-    'Here is to every place you have been, every heart you have touched, and every beautiful adventure still waiting for you.',
+    'Here is to every place you have been, and every adventure still waiting for you.',
   signature: 'With all my love',
   contributionHeading: 'Add your light to Afia’s world',
   contributionIntro:

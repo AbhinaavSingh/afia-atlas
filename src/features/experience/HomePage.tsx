@@ -77,7 +77,7 @@ function LockedPage({
         </div>
         {!memories.length && (
           <p className="locked-first">
-            The map is still empty — yours could be the first light on it.
+            The map is still empty. Yours could be the first light on it.
           </p>
         )}
       </motion.div>
@@ -106,7 +106,7 @@ function AtlasPreviewPage({
           <h2>The atlas so far</h2>
           <p>
             {memories.length} {memories.length === 1 ? 'moment' : 'moments'}{' '}
-            placed by people who love her. Wander through them — then add your
+            placed by people who love her. Wander through them, then add your
             own.
           </p>
         </div>
@@ -190,7 +190,7 @@ function RevealedPage({ memories, demo }: { memories: Memory[]; demo: boolean })
         ) : (
           <div className="empty-globe">
             <Heart />
-            <p>The first lights are waiting to be approved.</p>
+            <p>The first lights will appear here soon.</p>
           </div>
         )}
       </section>

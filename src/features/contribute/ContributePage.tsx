@@ -240,8 +240,8 @@ export function ContributePage() {
           <p className="eyebrow">Your page is in the atlas</p>
           <h1>This moment now has a place in her world.</h1>
           <p>
-            Thank you for giving Afia a photograph she can travel back to. It
-            will join her private geographic photo album after review.
+            Thank you for giving Afia a photograph she can travel back to.
+            It is now part of her atlas.
           </p>
           <button className="secondary-button" onClick={() => window.location.reload()}>
             Place another moment
@@ -261,9 +261,8 @@ export function ContributePage() {
         <p className="eyebrow">A geographic photo album</p>
         <h1>Place one moment on her map.</h1>
         <p>
-          This is not a birthday questionnaire. Choose one photograph that
-          takes you back to a real place, then tell Afia what was happening
-          just beyond the frame.
+          Choose one photograph that takes you back to a place you shared
+          with Afia, then tell her what was happening just beyond the frame.
         </p>
       </section>
 
@@ -371,7 +370,7 @@ export function ContributePage() {
                         }
                       }}
                       onBlur={() => window.setTimeout(() => setSuggestions([]), 200)}
-                      placeholder="Start typing a place — suggestions appear"
+                      placeholder="Start typing a place"
                       role="combobox"
                       aria-expanded={suggestions.length > 0}
                       aria-autocomplete="list"
@@ -430,7 +429,7 @@ export function ContributePage() {
               <p className="atlas-step-kicker">Open the photograph</p>
               <h2>What lives inside this frame?</h2>
               <p className="atlas-step-intro">
-                Tell her what the camera caught—and what it could not.
+                Tell her what the camera caught, and what it didn't.
               </p>
               <label>
                 Give this moment a title

@@ -627,10 +627,10 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
           transition={{ duration: 0.8 }}
         >
           <p className="eyebrow">A world made brighter by you</p>
-          <h3>{memories.length} moments. One extraordinary life.</h3>
+          <h3>{memories.length} moments, pinned where they happened.</h3>
           <p>
-            Travel through the places, people, and stories that became more
-            beautiful because Afia was there.
+            Travel through the places and stories that friends have added
+            from across her world.
           </p>
           <button className="journey-enter" onClick={() => setIsOpen(true)}>
             <span>Step into her world</span>
