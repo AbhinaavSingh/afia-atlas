@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowLeft, Camera, Check, ImagePlus, LoaderCircle, MapPin, Navigation, Search } from 'lucide-react'
+import { ArrowLeft, Camera, Check, ImagePlus, LoaderCircle, MapPin, Navigation } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import { Link } from 'react-router-dom'
@@ -7,52 +7,12 @@ import { submitMemory } from '../../lib/api'
 import { prepareImage } from '../../lib/image'
 import { contributionSchema } from '../../lib/validation'
 import { createJourneyIcon } from '../journey/markers'
+import { LocationSearch } from '../shared/LocationSearch'
 
 const contributionPin = createJourneyIcon({
   kind: 'pin',
   label: 'Moment location',
 })
-
-interface PhotonFeature {
-  geometry: { coordinates: [number, number] }
-  properties: {
-    osm_id?: number
-    name?: string
-    city?: string
-    district?: string
-    state?: string
-    country?: string
-    countrycode?: string
-  }
-}
-
-interface PlaceSuggestion {
-  id: string
-  label: string
-  lat: number
-  lon: number
-  city: string
-  regionName: string
-  countryCode: string
-}
-
-function toSuggestion(feature: PhotonFeature, index: number): PlaceSuggestion {
-  const props = feature.properties
-  const [lon, lat] = feature.geometry.coordinates
-  const parts = [props.name, props.city, props.state, props.country].filter(
-    (part, partIndex, all): part is string =>
-      Boolean(part) && all.indexOf(part) === partIndex,
-  )
-  return {
-    id: `${props.osm_id ?? index}:${lat}:${lon}`,
-    label: parts.join(', '),
-    lat,
-    lon,
-    city: props.city ?? (props.name && props.state ? props.name : ''),
-    regionName: props.state ?? '',
-    countryCode: props.countrycode?.toUpperCase() ?? '',
-  }
-}
 
 declare global {
   interface Window {
@@ -102,10 +62,6 @@ export function ContributePage() {
     regionName: '',
     countryCode: '',
   })
-  const [findingPlace, setFindingPlace] = useState(false)
-  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
-  const [highlighted, setHighlighted] = useState(0)
-  const [chosenLabel, setChosenLabel] = useState('')
   const [turnstileToken, setTurnstileToken] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle')
   const [error, setError] = useState('')
@@ -136,57 +92,6 @@ export function ContributePage() {
     setPreview(URL.createObjectURL(file))
   }
 
-  // Live place suggestions while typing (debounced, cancellable).
-  useEffect(() => {
-    const query = placeQuery.trim()
-    const controller = new AbortController()
-    const timer = window.setTimeout(async () => {
-      if (query.length < 3 || placeQuery === chosenLabel) {
-        setSuggestions([])
-        setFindingPlace(false)
-        return
-      }
-      setFindingPlace(true)
-      try {
-        const params = new URLSearchParams({ q: query, limit: '6', lang: 'en' })
-        const response = await fetch(`https://photon.komoot.io/api/?${params}`, {
-          signal: controller.signal,
-        })
-        const data = (await response.json()) as { features?: PhotonFeature[] }
-        const seen = new Set<string>()
-        const next = (data.features ?? [])
-          .map(toSuggestion)
-          .filter((place) => {
-            if (!place.label || seen.has(place.label)) return false
-            seen.add(place.label)
-            return true
-          })
-        setSuggestions(next)
-        setHighlighted(0)
-        setFindingPlace(false)
-      } catch {
-        // Aborted by newer keystroke, or offline — nothing to show.
-        if (!controller.signal.aborted) setFindingPlace(false)
-      }
-    }, 300)
-    return () => {
-      controller.abort()
-      window.clearTimeout(timer)
-    }
-  }, [placeQuery, chosenLabel])
-
-  const choosePlace = (place: PlaceSuggestion) => {
-    setPosition([place.lat, place.lon])
-    setPlaceName(place.label)
-    setLocationMeta({
-      city: place.city,
-      regionName: place.regionName,
-      countryCode: place.countryCode,
-    })
-    setPlaceQuery(place.label)
-    setChosenLabel(place.label)
-    setSuggestions([])
-  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -344,72 +249,27 @@ export function ContributePage() {
               <p className="atlas-step-intro">
                 Where would this photograph live in Afia’s atlas?
               </p>
-              <div className="place-search">
-                <label>
-                  City, landmark, café, home, or place
-                  <div className="input-action">
-                    <input
-                      value={placeQuery}
-                      onChange={(event) => setPlaceQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault()
-                          if (suggestions[highlighted]) {
-                            choosePlace(suggestions[highlighted])
-                          }
-                        } else if (event.key === 'ArrowDown') {
-                          event.preventDefault()
-                          setHighlighted((current) =>
-                            Math.min(current + 1, suggestions.length - 1),
-                          )
-                        } else if (event.key === 'ArrowUp') {
-                          event.preventDefault()
-                          setHighlighted((current) => Math.max(current - 1, 0))
-                        } else if (event.key === 'Escape') {
-                          setSuggestions([])
-                        }
-                      }}
-                      onBlur={() => window.setTimeout(() => setSuggestions([]), 200)}
-                      placeholder="Start typing a place"
-                      role="combobox"
-                      aria-expanded={suggestions.length > 0}
-                      aria-autocomplete="list"
-                      autoComplete="off"
-                      required
-                    />
-                    <span className="input-action-icon" aria-hidden="true">
-                      {findingPlace ? <LoaderCircle className="spin" size={18} /> : <Search size={18} />}
-                    </span>
-                  </div>
-                </label>
-                {suggestions.length > 0 && (
-                  <ul className="place-results" role="listbox" aria-label="Matching places">
-                    {suggestions.map((place, index) => (
-                      <li key={place.id}>
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={index === highlighted}
-                          className={index === highlighted ? 'is-active' : ''}
-                          onMouseDown={(event) => {
-                            event.preventDefault()
-                            choosePlace(place)
-                          }}
-                          onMouseEnter={() => setHighlighted(index)}
-                        >
-                          <MapPin size={13} />
-                          <span>{place.label}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {placeName && !suggestions.length && (
-                  <p className="place-chosen">
-                    <Check size={13} /> {placeName}
-                  </p>
-                )}
-              </div>
+              <label>
+                City, landmark, café, home, or place
+                <LocationSearch
+                  required
+                  onQueryChange={setPlaceQuery}
+                  onSelect={(place) => {
+                    setPosition([place.lat, place.lon])
+                    setPlaceName(place.label)
+                    setLocationMeta({
+                      city: place.city,
+                      regionName: place.regionName,
+                      countryCode: place.countryCode,
+                    })
+                  }}
+                />
+              </label>
+              {placeName && (
+                <p className="place-chosen">
+                  <Check size={13} /> {placeName}
+                </p>
+              )}
               <div className="location-map">
                 <MapContainer center={position} zoom={2} scrollWheelZoom={false}>
                   <TileLayer

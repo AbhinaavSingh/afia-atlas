@@ -8,6 +8,7 @@ import {
   updateReveal,
 } from '../../lib/api'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
+import { LocationSearch } from '../shared/LocationSearch'
 import type { Memory } from '../../types'
 
 function Login({ onReady }: { onReady: () => void }) {
@@ -80,7 +81,26 @@ function MemoryEditor({
         <label>Title<input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
         <label>Story<textarea rows={7} value={draft.story} onChange={(event) => setDraft({ ...draft, story: event.target.value })} /></label>
         <label>Date or era<input value={draft.happenedAt ?? ''} onChange={(event) => setDraft({ ...draft, happenedAt: event.target.value })} /></label>
-        <label>Display location<input value={draft.locationName} onChange={(event) => setDraft({ ...draft, locationName: event.target.value })} /></label>
+        <label>
+          Location (search to move the pin too)
+          <LocationSearch
+            initialValue={draft.locationName}
+            onQueryChange={(value) =>
+              setDraft((current) => ({ ...current, locationName: value }))
+            }
+            onSelect={(place) =>
+              setDraft((current) => ({
+                ...current,
+                locationName: place.label,
+                city: place.city,
+                regionName: place.regionName,
+                countryCode: place.countryCode,
+                latitude: place.lat,
+                longitude: place.lon,
+              }))
+            }
+          />
+        </label>
         <div className="form-grid two">
           <label>City<input value={draft.city ?? ''} onChange={(event) => setDraft({ ...draft, city: event.target.value })} /></label>
           <label>State / region<input value={draft.regionName ?? ''} onChange={(event) => setDraft({ ...draft, regionName: event.target.value })} /></label>
