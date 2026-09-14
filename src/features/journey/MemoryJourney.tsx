@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Images,
+  Map as MapIcon,
   MapPin,
   Minus,
   Plus,
@@ -349,6 +350,7 @@ function StoryView({
 
 export function MemoryJourney({ memories }: MemoryJourneyProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'map' | 'gallery'>('map')
   const [selected, setSelected] = useState<Memory | null>(null)
   const [activeCountry, setActiveCountry] = useState<string | null>(null)
   const [activeArea, setActiveArea] = useState<string | null>(null)
@@ -400,6 +402,36 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
     (cluster) => cluster.areaKey === activeArea,
   )
 
+  // Every moment in one storytelling order: busiest country first, then its
+  // busiest places, so "next" always moves somewhere nearby before flying on.
+  const orderedMemories = useMemo(
+    () =>
+      countryClusters.flatMap((country) => {
+        const areas = groupBy(country.memories, (memory) =>
+          areaName(memory, country.countryCode),
+        )
+        return [...areas.entries()]
+          .sort((a, b) => b[1].length - a[1].length)
+          .flatMap(([, items]) => items)
+      }),
+    [countryClusters],
+  )
+
+  // The moments the bottom rail lists: everything within the current scope.
+  const scopeMemories = useMemo(() => {
+    if (activeAreaCluster) {
+      const ids = new Set(activeAreaCluster.memories.map((memory) => memory.id))
+      return orderedMemories.filter((memory) => ids.has(memory.id))
+    }
+    if (activeCountryCluster) {
+      const ids = new Set(
+        activeCountryCluster.memories.map((memory) => memory.id),
+      )
+      return orderedMemories.filter((memory) => ids.has(memory.id))
+    }
+    return orderedMemories
+  }, [activeAreaCluster, activeCountryCluster, orderedMemories])
+
   const cityCount = useMemo(
     () =>
       new Set(
@@ -417,7 +449,6 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
     return countryClusters
   }, [activeAreaCluster, activeCountryCluster, areaClusters, countryClusters])
 
-  const visibleMemories = activeAreaCluster?.memories ?? []
   const cameraCenter: [number, number] = activeAreaCluster
     ? [activeAreaCluster.lat, activeAreaCluster.lng]
     : activeCountryCluster
@@ -475,11 +506,21 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
     )
   }
 
+  // Opening a moment also quietly moves the map to its place, so closing the
+  // story always leaves you standing where that moment happened.
+  const openMemory = (memory: Memory) => {
+    setShowFirstHint(false)
+    setSelected(memory)
+    setSeenIds((current) => new Set(current).add(memory.id))
+    const countryCode = inferredCountry(memory)
+    setActiveCountry(countryCode)
+    setActiveArea(areaName(memory, countryCode))
+  }
+
   const activatePoint = (point: JourneyPoint) => {
     setShowFirstHint(false)
     if (point.kind === 'memory') {
-      setSelected(point.memory)
-      setSeenIds((current) => new Set(current).add(point.memory.id))
+      openMemory(point.memory)
       return
     }
     travel(() => {
@@ -499,46 +540,30 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
     })
   }
 
+  // Next and back walk through every moment on the site, in the ordered
+  // storytelling sequence, wrapping around at the ends.
   const stepMemory = (direction: number) => {
-    if (!selected || !visibleMemories.length) return
-    const current = visibleMemories.findIndex((memory) => memory.id === selected.id)
+    if (!selected || !orderedMemories.length) return
+    const current = orderedMemories.findIndex(
+      (memory) => memory.id === selected.id,
+    )
     const next =
-      visibleMemories[
-        (current + direction + visibleMemories.length) % visibleMemories.length
+      orderedMemories[
+        (current + direction + orderedMemories.length) % orderedMemories.length
       ]
-    setSelected(next)
-    setSeenIds((currentIds) => new Set(currentIds).add(next.id))
+    openMemory(next)
   }
 
   const continueJourney = () => {
     if (!selected) return
-    const memoryIndex = visibleMemories.findIndex(
+    const current = orderedMemories.findIndex(
       (memory) => memory.id === selected.id,
     )
-    if (memoryIndex < visibleMemories.length - 1) {
-      const next = visibleMemories[memoryIndex + 1]
-      setSelected(next)
-      setSeenIds((current) => new Set(current).add(next.id))
+    if (current < orderedMemories.length - 1) {
+      openMemory(orderedMemories[current + 1])
       return
     }
     setSelected(null)
-    const areaIndex = areaClusters.findIndex(
-      (cluster) => cluster.areaKey === activeArea,
-    )
-    if (areaIndex < areaClusters.length - 1) {
-      travel(() => setActiveArea(areaClusters[areaIndex + 1].areaKey ?? null))
-      return
-    }
-    const countryIndex = countryClusters.findIndex(
-      (cluster) => cluster.countryCode === activeCountry,
-    )
-    if (countryIndex < countryClusters.length - 1) {
-      travel(() => {
-        setActiveCountry(countryClusters[countryIndex + 1].countryCode)
-        setActiveArea(null)
-      })
-      return
-    }
     setIsOpen(false)
     window.setTimeout(
       () =>
@@ -632,10 +657,28 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
             Travel through the places and stories that friends have added
             from across her world.
           </p>
-          <button className="journey-enter" onClick={() => setIsOpen(true)}>
-            <span>Step into her world</span>
-            <ArrowRight size={17} />
-          </button>
+          <div className="journey-poster-actions">
+            <button
+              className="journey-enter"
+              onClick={() => {
+                setViewMode('map')
+                setIsOpen(true)
+              }}
+            >
+              <span>Step into her world</span>
+              <ArrowRight size={17} />
+            </button>
+            <button
+              className="journey-enter-alt"
+              onClick={() => {
+                setViewMode('gallery')
+                setIsOpen(true)
+              }}
+            >
+              <Images size={13} />
+              <span>Or browse every moment as a gallery</span>
+            </button>
+          </div>
         </motion.div>
         <div className="journey-poster-foot">
           <span>{memories.length} moments</span><i />
@@ -658,17 +701,44 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                 <span>Afia · Thirty</span>
               </div>
               <div className="journey-breadcrumb">
-                {activeCountry && (
+                {viewMode === 'map' && activeCountry && (
                   <button onClick={goBack}>
                     <ArrowLeft size={14} />
                     {activeArea ? activeCountryCluster?.label : 'The world'}
                   </button>
                 )}
-                <span>{contextTitle}</span>
+                <span>
+                  {viewMode === 'gallery'
+                    ? `Every moment · ${memories.length} across ${countryClusters.length} countries`
+                    : contextTitle}
+                </span>
               </div>
-              <button className="journey-exit" onClick={closeJourney}>
-                Exit <X size={15} />
-              </button>
+              <div className="journey-header-actions">
+                <button
+                  className="journey-view-toggle"
+                  aria-label={
+                    viewMode === 'map'
+                      ? 'Switch to gallery view'
+                      : 'Switch to map view'
+                  }
+                  onClick={() =>
+                    setViewMode((mode) => (mode === 'map' ? 'gallery' : 'map'))
+                  }
+                >
+                  {viewMode === 'map' ? (
+                    <>
+                      <Images size={14} /> <span>Gallery</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapIcon size={14} /> <span>Map</span>
+                    </>
+                  )}
+                </button>
+                <button className="journey-exit" onClick={closeJourney}>
+                  Exit <X size={15} />
+                </button>
+              </div>
             </header>
 
             <div className="journey-map">
@@ -692,7 +762,12 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                 <MapControls />
                 <ZoomOutWatcher
                   levelZoom={cameraZoom}
-                  enabled={Boolean(activeCountry) && !isTravelling}
+                  enabled={
+                    Boolean(activeCountry) &&
+                    !isTravelling &&
+                    !selected &&
+                    viewMode === 'map'
+                  }
                   onZoomOut={goBack}
                 />
                 {!activeArea &&
@@ -744,7 +819,7 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                 <Sparkles size={18} />
               </motion.div>
               <AnimatePresence>
-                {showFirstHint && (
+                {showFirstHint && viewMode === 'map' && (
                   <motion.div
                     className="journey-first-hint"
                     initial={{ opacity: 0, y: 10, scale: 0.96 }}
@@ -757,7 +832,7 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                 )}
               </AnimatePresence>
               <AnimatePresence>
-                {activeCountry && (
+                {viewMode === 'map' && activeCountry && (
                   <motion.button
                     key={activeArea ? 'back-to-country' : 'back-to-world'}
                     className="journey-back-fab"
@@ -775,6 +850,90 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
               </AnimatePresence>
             </div>
 
+            <AnimatePresence>
+              {viewMode === 'gallery' && (
+                <motion.div
+                  className="journey-gallery"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <div className="journey-gallery-inner">
+                    <p className="gallery-lede">
+                      Every moment gathered in one place. Open any photograph
+                      to read its story, or switch back to the map to travel
+                      there.
+                    </p>
+                    {countryClusters.map((country) => {
+                      const items = orderedMemories.filter(
+                        (memory) =>
+                          inferredCountry(memory) === country.countryCode,
+                      )
+                      return (
+                        <section key={country.id} className="gallery-group">
+                          <header>
+                            <h3>{country.label}</h3>
+                            <span>
+                              {items.length}{' '}
+                              {items.length === 1 ? 'moment' : 'moments'}
+                            </span>
+                          </header>
+                          <div className="gallery-grid">
+                            {items.map((memory) => {
+                              const globalIndex = orderedMemories.findIndex(
+                                (item) => item.id === memory.id,
+                              )
+                              const image =
+                                memory.thumbnailUrl ?? memory.imageUrl
+                              return (
+                                <motion.button
+                                  key={memory.id}
+                                  className={`gallery-card ${seenIds.has(memory.id) ? 'is-seen' : ''}`}
+                                  onClick={() => openMemory(memory)}
+                                  initial={{ opacity: 0, y: 18 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true, amount: 0.2 }}
+                                  transition={{ duration: 0.55 }}
+                                >
+                                  <span className="gallery-card-photo">
+                                    {image ? (
+                                      <img src={image} alt="" loading="lazy" />
+                                    ) : (
+                                      <Sparkles size={18} />
+                                    )}
+                                  </span>
+                                  {seenIds.has(memory.id) && (
+                                    <span
+                                      className="gallery-card-seen"
+                                      aria-label="Already seen"
+                                    >
+                                      <Check size={11} />
+                                    </span>
+                                  )}
+                                  <span className="gallery-card-copy">
+                                    <small>
+                                      {String(globalIndex + 1).padStart(2, '0')}{' '}
+                                      ·{' '}
+                                      {memory.city ||
+                                        memory.locationName.split(',')[0]}
+                                    </small>
+                                    <strong>{memory.title}</strong>
+                                    <em>{memory.contributorName}</em>
+                                  </span>
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </section>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {viewMode === 'map' && (
             <div className="journey-rail-panel">
               <div className="journey-rail-context">
                 <div>
@@ -792,34 +951,42 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                   <i style={{ width: `${seenProgress}%` }} />
                 </div>
               </div>
-              <div className="journey-location-rail" aria-label="Places and moments">
-                {points.map((point, index) => {
-                  const pointMemories =
-                    point.kind === 'memory' ? [point.memory] : point.memories
-                  const seen = pointMemories.every((memory) =>
-                    seenIds.has(memory.id),
-                  )
-                  return (
-                    <RailCard
-                      key={point.id}
-                      point={point}
-                      index={index}
-                      seen={seen}
-                      onClick={() => activatePoint(point)}
-                    />
-                  )
-                })}
+              <div
+                className="journey-location-rail"
+                aria-label="Places and moments"
+                key={activeArea ?? activeCountry ?? 'world'}
+              >
+                {scopeMemories.map((memory, index) => (
+                  <RailCard
+                    key={memory.id}
+                    point={{
+                      id: memory.id,
+                      kind: 'memory',
+                      label: memory.title,
+                      count: 1,
+                      lat: memory.latitude,
+                      lng: memory.longitude,
+                      memory,
+                    }}
+                    index={index}
+                    seen={seenIds.has(memory.id)}
+                    onClick={() => openMemory(memory)}
+                  />
+                ))}
               </div>
             </div>
+            )}
 
-            <div className="journey-guidance">
-              <span />
-              {activeArea
-                ? 'Choose a photograph'
-                : activeCountry
-                  ? 'Choose a place'
-                  : 'Choose a country'}
-            </div>
+            {viewMode === 'map' && (
+              <div className="journey-guidance">
+                <span />
+                {activeArea
+                  ? 'Choose a photograph'
+                  : activeCountry
+                    ? 'Choose a place'
+                    : 'Choose a country'}
+              </div>
+            )}
             <button className="journey-finish" onClick={finishJourney}>
               Finish journey <ChevronDown size={14} />
             </button>
@@ -830,11 +997,11 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                   memory={selected}
                   index={Math.max(
                     0,
-                    visibleMemories.findIndex(
+                    orderedMemories.findIndex(
                       (memory) => memory.id === selected.id,
                     ),
                   )}
-                  total={visibleMemories.length}
+                  total={orderedMemories.length}
                   onClose={() => setSelected(null)}
                   onPrevious={() => stepMemory(-1)}
                   onNext={() => stepMemory(1)}
