@@ -731,6 +731,23 @@ export function MemoryJourney({ memories }: MemoryJourneyProps) {
                   </motion.div>
                 )}
               </AnimatePresence>
+              <AnimatePresence>
+                {activeCountry && (
+                  <motion.button
+                    key={activeArea ? 'back-to-country' : 'back-to-world'}
+                    className="journey-back-fab"
+                    onClick={goBack}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <ArrowLeft size={15} />
+                    {activeArea
+                      ? `Back to ${activeCountryCluster?.label ?? 'the country'}`
+                      : 'Back to the world map'}
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="journey-rail-panel">

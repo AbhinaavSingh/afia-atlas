@@ -17,6 +17,10 @@ test('revealed experience opens a memory', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: /continue the journey/i }),
   ).toBeVisible()
+  await page.getByRole('button', { name: /close moment/i }).click()
+  await page.getByRole('button', { name: /back to india/i }).click()
+  await page.getByRole('button', { name: /back to the world map/i }).click()
+  await expect(page.getByText(/her world · 6 moments/i).first()).toBeVisible()
 })
 
 test('contribution page exposes the complete story flow', async ({ page }) => {

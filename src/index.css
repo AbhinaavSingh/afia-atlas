@@ -97,6 +97,9 @@ h1, h2, h3 { font-family: 'Italiana', serif; font-weight: 400; }
 .place-chosen { display: flex; align-items: flex-start; gap: .45rem; margin: .6rem 0 0; color: #a9d3a9; font-size: .74rem; line-height: 1.5; }
 .place-chosen svg { flex-shrink: 0; margin-top: .1rem; }
 .place-chosen.muted { color: #8f838e; }
+.journey-back-fab { position: absolute; z-index: 2150; top: 94px; left: 1.2rem; display: inline-flex; align-items: center; gap: .55rem; padding: .78rem 1.15rem; border: 1px solid rgba(215,185,120,.4); border-radius: 99px; background: rgba(12,8,14,.85); backdrop-filter: blur(10px); color: var(--cream); font-size: .76rem; letter-spacing: .04em; box-shadow: 0 8px 26px rgba(0,0,0,.4); cursor: pointer; }
+.journey-back-fab:hover { background: rgba(215,185,120,.16); transform: translateY(-1px); }
+.journey-back-fab svg { color: var(--gold); }
 .text-link { font-size: .78rem; border-bottom: 1px solid rgba(215,185,120,.4); padding-bottom: .4rem; color: #d8ccd3; }
 .text-link span { color: var(--gold); margin-left: .3rem; }
 .orb { position: absolute; border-radius: 50%; filter: blur(3px); opacity: .18; }
@@ -437,6 +440,7 @@ input::placeholder, textarea::placeholder { color: #5f5661; }
   .journey-breadcrumb { justify-self: center; max-width: 72vw; padding: .48rem .65rem; overflow: hidden; }
   .journey-breadcrumb > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .journey-exit { padding: .5rem; font-size: 0; }
+  .journey-back-fab { top: 78px; left: .75rem; padding: .68rem .95rem; font-size: .72rem; }
   .journey-map-controls { right: .75rem; }
   .journey-rail-panel { width: calc(100vw - 1rem); bottom: 2.8rem; padding: .5rem; border-radius: 14px; }
   .journey-rail-context { grid-template-columns: 1fr; gap: .5rem; padding: .1rem .25rem .55rem; }
