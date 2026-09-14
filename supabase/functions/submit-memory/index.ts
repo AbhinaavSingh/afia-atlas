@@ -65,7 +65,7 @@ Deno.serve(async (request) => {
     return json(request, { error: 'Origin not allowed.' }, 403)
   }
 
-  let submissionId = ''
+  let uploadedPaths: string[] = []
   try {
     const [{ data: settings }, form] = await Promise.all([
       admin.from('site_settings').select('contributions_open').eq('id', 1).single(),
@@ -140,25 +140,31 @@ Deno.serve(async (request) => {
     if (!(image instanceof File) || !(thumbnail instanceof File)) {
       throw new Error('A photograph is required.')
     }
+    // Safari cannot encode WebP, so the client sends JPEG from those devices.
+    const extensions: Record<string, string> = {
+      'image/webp': 'webp',
+      'image/jpeg': 'jpg',
+    }
     if (
-      image.type !== 'image/webp' ||
-      thumbnail.type !== 'image/webp' ||
-      image.size > 800_000 ||
-      thumbnail.size > 180_000
+      !extensions[image.type] ||
+      !extensions[thumbnail.type] ||
+      image.size > 1_200_000 ||
+      thumbnail.size > 250_000
     ) {
       throw new Error('The processed photograph is invalid or too large.')
     }
 
-    submissionId = crypto.randomUUID()
-    const imagePath = `${submissionId}/image.webp`
-    const thumbnailPath = `${submissionId}/thumbnail.webp`
+    const submissionId = crypto.randomUUID()
+    const imagePath = `${submissionId}/image.${extensions[image.type]}`
+    const thumbnailPath = `${submissionId}/thumbnail.${extensions[thumbnail.type]}`
+    uploadedPaths = [imagePath, thumbnailPath]
     const [imageUpload, thumbnailUpload] = await Promise.all([
       admin.storage.from('approved-memories').upload(imagePath, image, {
-        contentType: 'image/webp',
+        contentType: image.type,
         cacheControl: '31536000',
       }),
       admin.storage.from('approved-memories').upload(thumbnailPath, thumbnail, {
-        contentType: 'image/webp',
+        contentType: thumbnail.type,
         cacheControl: '31536000',
       }),
     ])
@@ -190,10 +196,8 @@ Deno.serve(async (request) => {
     await admin.from('submission_attempts').insert({ ip_hash: ipHash })
     return json(request, { id: submissionId }, 201)
   } catch (error) {
-    if (submissionId) {
-      await admin.storage
-        .from('approved-memories')
-        .remove([`${submissionId}/image.webp`, `${submissionId}/thumbnail.webp`])
+    if (uploadedPaths.length) {
+      await admin.storage.from('approved-memories').remove(uploadedPaths)
     }
     console.error(error)
     return json(

@@ -37,7 +37,7 @@ async function transfer(paths: string[], source: string, destination: string) {
     const { error: uploadError } = await admin.storage
       .from(destination)
       .upload(path, data, {
-        contentType: 'image/webp',
+        contentType: path.endsWith('.jpg') ? 'image/jpeg' : 'image/webp',
         cacheControl: '31536000',
         upsert: true,
       })
